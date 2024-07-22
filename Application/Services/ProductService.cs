@@ -37,7 +37,7 @@ namespace Application.Services
                 existingProduct.Description = product.Description;
                 existingProduct.Price = product.Price;
                 existingProduct.Quantity = product.Quantity;
-                existingProduct.CategoryId = product.CategoryId;
+                existingProduct.Category = product.Category;
             }
         }
 
@@ -68,9 +68,9 @@ namespace Application.Services
             {
                 throw new ArgumentException("Product quantity must be greater than zero");
             }
-            if (product.CategoryId <= 0)
+            if (string.IsNullOrEmpty(product.Category))
             {
-                throw new ArgumentException("Product category Id must be greater than zero");
+                throw new ArgumentException("Product category cannot be empty");
             }
         }
     }

@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace Application.Models
+﻿namespace Application.Models
 {
     public class Product
     {
@@ -9,6 +7,6 @@ namespace Application.Models
         public string Description { get; set; }
         public decimal Price { get; set; }
         public int Quantity { get; set; }
-        public int CategoryId { get; set; }
+        public string Category { get; set; }
     }
 }

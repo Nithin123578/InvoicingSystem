@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Application\Application.csproj" />
+    <ProjectReference Include="..\InvoicingSystem\InvoicingSystem.csproj" />
   </ItemGroup>
 
 </Project>
