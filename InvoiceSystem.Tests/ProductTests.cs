@@ -57,7 +57,7 @@ namespace InvoicingSystem.Tests
             var addedProduct = _productService.AddProduct(product);
             addedProduct.Name = "towel";
             addedProduct.Price = 20;
-            addedProduct.Quantity = 20;
+            addedProduct.Quantity = 20; 
             addedProduct.Description = "towel";
             addedProduct.CategoryId = 2;
             _productService.UpdateProduct(addedProduct);
