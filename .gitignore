@@ -1,0 +1,9 @@
+InvoicingSystem/bin
+InvoicingSystem/obj
+InvoicingSystem/.vs
+Application/bin
+Application/obj
+InvoiceSystem.Tests/bin
+InvoiceSystem.Tests/obj
+/.vs
+/.sonarqube
