@@ -1,10 +1,14 @@
 using Application.Interfaces;
-using Application.Services;
 using Application.Models;
+using Application.Services;
 using InvoicingSystem.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
+using NUnit.Framework;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace InvoicingSystem.Tests
 {
@@ -14,6 +18,7 @@ namespace InvoicingSystem.Tests
         private ICategoryService _categoryService;
         private CategoryController _controller;
         private Mock<ILogger<CategoryService>> _loggerMock;
+
         [SetUp]
         public void Setup()
         {
@@ -22,6 +27,9 @@ namespace InvoicingSystem.Tests
             _controller = new CategoryController(_categoryService);
         }
 
+        /// <summary>
+        /// Tests that an exception is thrown when attempting to add a null category.
+        /// </summary>
         [Test]
         public void AddCategory_ShouldThrowException_CategoryIsNull()
         {
@@ -29,6 +37,9 @@ namespace InvoicingSystem.Tests
             Assert.AreEqual("Category is empty (Parameter 'category')", ex.Message);
         }
 
+        /// <summary>
+        /// Tests that an exception is thrown when attempting to update a null category.
+        /// </summary>
         [Test]
         public void UpdateCategory_ShouldThrowException_CategoryIsNull()
         {
@@ -36,6 +47,9 @@ namespace InvoicingSystem.Tests
             Assert.AreEqual("Category is empty (Parameter 'category')", ex.Message);
         }
 
+        /// <summary>
+        /// Tests that a category is added successfully and has the correct properties.
+        /// </summary>
         [Test]
         public void AddCategory_Should_AddCategorySuccessfully()
         {
@@ -48,28 +62,29 @@ namespace InvoicingSystem.Tests
             Assert.AreEqual(category.Name, addedCategory.Name);
         }
 
+        /// <summary>
+        /// Tests that the correct list of categories is returned.
+        /// </summary>
         [Test]
         public void GetCategories_Should_ReturnCorrectCategoryList()
         {
             var category1 = new Category { Name = "Electronics", Description = "Electronic items" };
-            var result = _controller.AddCategory(category1);
-            var okResult = result.Result as OkObjectResult;
-            var firstCategory = okResult.Value as Category;
-
             var category2 = new Category { Name = "Clothing", Description = "Apparel and clothing" };
-             result = _controller.AddCategory(category2);
-             okResult = result.Result as OkObjectResult;
-            var secondCategory = okResult.Value as Category;
+            _controller.AddCategory(category1);
+            _controller.AddCategory(category2);
 
             var getResult = _controller.GetCategories() as ActionResult<IEnumerable<Category>>;
-            okResult = getResult.Result as OkObjectResult;
+            var okResult = getResult.Result as OkObjectResult;
             var retrievedCategories = okResult.Value as List<Category>;
 
             Assert.AreEqual(2, retrievedCategories.Count);
-            Assert.Contains(firstCategory, retrievedCategories);
-            Assert.Contains(secondCategory, retrievedCategories);
+            Assert.Contains(category1, retrievedCategories);
+            Assert.Contains(category2, retrievedCategories);
         }
 
+        /// <summary>
+        /// Tests that a category can be retrieved by its ID.
+        /// </summary>
         [Test]
         public void GetCategoryById_Should_ReturnCorrectCategory()
         {
@@ -78,12 +93,16 @@ namespace InvoicingSystem.Tests
             var okResult = result.Result as OkObjectResult;
             var addedCategory = okResult.Value as Category;
 
-            result = _controller.GetCategory(addedCategory.Id) as ActionResult<Category>;
-            okResult = result.Result as OkObjectResult;
+            var getResult = _controller.GetCategory(addedCategory.Id) as ActionResult<Category>;
+            okResult = getResult.Result as OkObjectResult;
             var retrievedCategory = okResult.Value as Category;
+
             Assert.AreEqual(addedCategory, retrievedCategory);
         }
 
+        /// <summary>
+        /// Tests that a category is updated successfully with new values.
+        /// </summary>
         [Test]
         public void UpdateCategory_Should_UpdateCategorySuccessfully()
         {
@@ -92,18 +111,22 @@ namespace InvoicingSystem.Tests
             var okResult = result.Result as OkObjectResult;
             var addedCategory = okResult.Value as Category;
 
+            // Update the category details
             addedCategory.Name = "Clothing";
             addedCategory.Description = "Clothing items";
             _categoryService.UpdateCategory(addedCategory);
 
-            result = _controller.GetCategory(addedCategory.Id) as ActionResult<Category>;
-            okResult = result.Result as OkObjectResult;
+            var updatedResult = _controller.GetCategory(addedCategory.Id) as ActionResult<Category>;
+            okResult = updatedResult.Result as OkObjectResult;
             var updatedCategory = okResult.Value as Category;
 
             Assert.AreEqual("Clothing", updatedCategory.Name);
             Assert.AreEqual("Clothing items", updatedCategory.Description);
         }
 
+        /// <summary>
+        /// Tests that a category is deleted successfully and no longer exists in the list.
+        /// </summary>
         [Test]
         public void DeleteCategory_Should_RemoveCategorySuccessfully()
         {
@@ -112,14 +135,17 @@ namespace InvoicingSystem.Tests
             var okResult = result.Result as OkObjectResult;
             var addedCategory = okResult.Value as Category;
 
-
             _controller.DeleteCategory(addedCategory.Id);
-            var getResult = _controller.GetCategories()  as ActionResult<IEnumerable<Category>>;
+            var getResult = _controller.GetCategories() as ActionResult<IEnumerable<Category>>;
             okResult = getResult.Result as OkObjectResult;
-            var retrievedCategory = okResult.Value as List<Category>;
-            Assert.IsFalse(retrievedCategory.Any(p => p.Id == addedCategory.Id));
+            var retrievedCategories = okResult.Value as List<Category>;
+
+            Assert.IsFalse(retrievedCategories.Any(c => c.Id == addedCategory.Id));
         }
 
+        /// <summary>
+        /// Tests that adding a category with invalid properties throws appropriate exceptions.
+        /// </summary>
         [Test]
         public void AddCategory_Should_ThrowException_ForInvalidCategory()
         {
@@ -133,6 +159,9 @@ namespace InvoicingSystem.Tests
             Assert.AreEqual("Category description cannot be empty", ex.Message);
         }
 
+        /// <summary>
+        /// Tests that updating a category with invalid properties throws appropriate exceptions.
+        /// </summary>
         [Test]
         public void UpdateCategory_Should_ThrowException_ForInvalidCategory()
         {
@@ -141,7 +170,6 @@ namespace InvoicingSystem.Tests
 
             validCategory.Id = addedCategory.Id;
             validCategory.Name = "";
-            validCategory.Description = "Clothing items";
             var ex = Assert.Throws<ArgumentException>(() => _categoryService.UpdateCategory(validCategory));
             Assert.AreEqual("Category name cannot be empty", ex.Message);
 
@@ -151,17 +179,23 @@ namespace InvoicingSystem.Tests
             Assert.AreEqual("Category description cannot be empty", ex.Message);
         }
 
+        /// <summary>
+        /// Tests that attempting to update a category with an invalid ID throws an exception.
+        /// </summary>
         [Test]
         public void UpdateCategory_Should_ThrowException_ForInvalidCategoryId()
         {
             var validCategory = new Category { Name = "Clothing", Description = "Clothing items" };
-            var addedCategory = _categoryService.AddCategory(validCategory);
+            _categoryService.AddCategory(validCategory);
 
             var invalidCategoryId = 999;
             var ex = Assert.Throws<KeyNotFoundException>(() => _categoryService.GetCategoryById(invalidCategoryId));
             Assert.AreEqual($"Category with ID {invalidCategoryId} not found", ex.Message);
         }
 
+        /// <summary>
+        /// Tests that adding a category with a duplicate name throws an exception.
+        /// </summary>
         [Test]
         public void AddCategory_ShouldThrowException_ForDuplicateCategory()
         {
@@ -173,6 +207,9 @@ namespace InvoicingSystem.Tests
             Assert.AreEqual("Category already exists", ex.Message);
         }
 
+        /// <summary>
+        /// Tests that retrieving a category with an invalid ID returns a not found result.
+        /// </summary>
         [Test]
         public void GetCategoryById_ShouldReturnNotFound_ForInvalidId()
         {

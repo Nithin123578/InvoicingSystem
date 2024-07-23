@@ -26,6 +26,9 @@ namespace InvoicingSystem.Tests
             _controller = new CustomerController(_customerService);
         }
 
+        /// <summary>
+        /// Tests that an exception is thrown when attempting to add a null customer.
+        /// </summary>
         [Test]
         public void AddCustomer_ShouldThrowException_CustomerIsNull()
         {
@@ -33,6 +36,9 @@ namespace InvoicingSystem.Tests
             Assert.AreEqual("Customer is empty (Parameter 'customer')", ex.Message);
         }
 
+        /// <summary>
+        /// Tests that an exception is thrown when attempting to update a null customer.
+        /// </summary>
         [Test]
         public void UpdateCustomer_ShouldThrowException_CustomerIsNull()
         {
@@ -40,6 +46,9 @@ namespace InvoicingSystem.Tests
             Assert.AreEqual("Customer is empty (Parameter 'customer')", ex.Message);
         }
 
+        /// <summary>
+        /// Tests that the correct list of customers is returned.
+        /// </summary>
         [Test]
         public void GetCustomers_Should_ReturnCorrectCustomerList()
         {
@@ -58,6 +67,9 @@ namespace InvoicingSystem.Tests
             Assert.Contains(customer2, retrievedCustomers);
         }
 
+        /// <summary>
+        /// Tests that a customer can be retrieved by its ID.
+        /// </summary>
         [Test]
         public void GetCustomerById_Should_ReturnCorrectCustomer()
         {
@@ -72,6 +84,10 @@ namespace InvoicingSystem.Tests
 
             Assert.AreEqual(addedCustomer, retrievedCustomer);
         }
+
+        /// <summary>
+        /// Tests that a customer is added successfully.
+        /// </summary>
         [Test]
         public void AddCustomer_Should_AddCustomerSuccessfully()
         {
@@ -84,6 +100,9 @@ namespace InvoicingSystem.Tests
             Assert.AreEqual(customer.Name, createdCustomer.Name);
         }
 
+        /// <summary>
+        /// Tests that a customer is updated successfully.
+        /// </summary>
         [Test]
         public void UpdateCustomer_Should_UpdateCustomerSuccessfully()
         {
@@ -102,6 +121,9 @@ namespace InvoicingSystem.Tests
             Assert.AreEqual("Jane Doe", updatedCustomer.Name);
         }
 
+        /// <summary>
+        /// Tests that a customer is deleted successfully.
+        /// </summary>
         [Test]
         public void DeleteCustomer_Should_RemoveCustomerSuccessfully()
         {
@@ -115,9 +137,12 @@ namespace InvoicingSystem.Tests
             okResult = getResult.Result as OkObjectResult;
             var retrievedCustomers = okResult.Value as List<Customer>;
 
-            Assert.IsFalse(retrievedCustomers.Any(p => p.Id == addedCustomer.Id));
+            Assert.IsFalse(retrievedCustomers.Any(c => c.Id == addedCustomer.Id));
         }
 
+        /// <summary>
+        /// Tests that adding a customer with invalid properties throws appropriate exceptions.
+        /// </summary>
         [Test]
         public void AddCustomer_Should_ThrowException_ForInvalidCustomer()
         {
@@ -144,6 +169,9 @@ namespace InvoicingSystem.Tests
             Assert.AreEqual("Customer contact number is not in a valid format", ex.Message);
         }
 
+        /// <summary>
+        /// Tests that updating a customer with invalid properties throws appropriate exceptions.
+        /// </summary>
         [Test]
         public void UpdateCustomer_Should_ThrowException_ForInvalidCustomer()
         {
@@ -174,6 +202,9 @@ namespace InvoicingSystem.Tests
             Assert.AreEqual("Customer contact number is not in a valid format", ex.Message);
         }
 
+        /// <summary>
+        /// Tests that attempting to update a customer with an invalid ID throws an exception.
+        /// </summary>
         [Test]
         public void UpdateCustomer_Should_ThrowException_ForInvalidCustomerId()
         {
@@ -185,6 +216,9 @@ namespace InvoicingSystem.Tests
             Assert.AreEqual($"Customer with ID {invalidCustomerId} not found", ex.Message);
         }
 
+        /// <summary>
+        /// Tests that retrieving customers returns an empty list when no customers exist.
+        /// </summary>
         [Test]
         public void GetCustomers_Should_ReturnEmptyList_WhenNoCustomers()
         {
@@ -195,6 +229,9 @@ namespace InvoicingSystem.Tests
             Assert.AreEqual(0, retrievedCustomers.Count);
         }
 
+        /// <summary>
+        /// Tests that adding a customer with a duplicate email throws an exception.
+        /// </summary>
         [Test]
         public void AddCustomer_Should_ThrowException_ForDuplicateEmail()
         {

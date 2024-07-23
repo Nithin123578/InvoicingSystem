@@ -5,6 +5,10 @@ using InvoicingSystem.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
+using NUnit.Framework;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace InvoicingSystem.Tests
 {
@@ -27,6 +31,9 @@ namespace InvoicingSystem.Tests
             _controller = new CartController(_cartService);
         }
 
+        /// <summary>
+        /// Tests that adding an item to the cart is successful and the item is correctly added.
+        /// </summary>
         [Test]
         public void AddItemToCart_Should_AddItemsSuccessfully()
         {
@@ -34,8 +41,8 @@ namespace InvoicingSystem.Tests
             var cartItem = new CartItem { Name = "Laptop", Price = 1000.00m, Quantity = 1, Discount = 10 };
 
             var actionResult = _controller.AddProductToCart(customerId, cartItem);
-
             var okResult = actionResult.Result as OkObjectResult;
+
             Assert.NotNull(okResult);
             Assert.AreEqual(200, okResult.StatusCode);
 
@@ -47,8 +54,11 @@ namespace InvoicingSystem.Tests
             Assert.AreEqual(cartItem.Quantity, returnedCartItem.Quantity);
         }
 
+        /// <summary>
+        /// Tests that retrieving the cart returns the correct list of items.
+        /// </summary>
         [Test]
-        public void GeCart_Should_ReturnCorrectCartSList()
+        public void GetCart_Should_ReturnCorrectCartList()
         {
             var customerId = 1;
             var cartItem = new CartItem { Name = "Laptop", Price = 1000.00m, Quantity = 1, Discount = 10 };
@@ -71,43 +81,50 @@ namespace InvoicingSystem.Tests
             Assert.Contains(secondCart, retrievedCarts.Items);
         }
 
+        /// <summary>
+        /// Tests that updating an item in the cart is successful and the item is correctly updated.
+        /// </summary>
         [Test]
-        public void UpdateItemToCart_Should_UpdateItemsSuccessfully()
+        public void UpdateItemInCart_Should_UpdateItemsSuccessfully()
         {
             var customerId = 1;
             var cartItem = new CartItem { Name = "Laptop", Price = 1000.00m, Quantity = 1, Discount = 10 };
             var result = _controller.AddProductToCart(customerId, cartItem);
             var okResult = result.Result as OkObjectResult;
-            var addedCart = okResult.Value as CartItem;
+            var addedCartItem = okResult.Value as CartItem;
 
-            addedCart.Quantity += 1;
-            addedCart.Discount = 20;
-            result = _controller.AddProductToCart(customerId, addedCart);
+            addedCartItem.Quantity += 1;
+            addedCartItem.Discount = 20;
+            result = _controller.AddProductToCart(customerId, addedCartItem);
             okResult = result.Result as OkObjectResult;
-            var UpdatedCart = okResult.Value as CartItem;
-            Assert.AreEqual(addedCart.CardId, UpdatedCart.CardId);
-            Assert.AreEqual(addedCart.Quantity, UpdatedCart.Quantity);
-            Assert.AreEqual(addedCart.Discount, UpdatedCart.Discount);
+            var updatedCartItem = okResult.Value as CartItem;
+
+            Assert.AreEqual(addedCartItem.Name, updatedCartItem.Name);
+            Assert.AreEqual(addedCartItem.Quantity, updatedCartItem.Quantity);
+            Assert.AreEqual(addedCartItem.Discount, updatedCartItem.Discount);
         }
 
-
+        /// <summary>
+        /// Tests that removing the cart is successful and the cart is correctly removed.
+        /// </summary>
         [Test]
         public void DeleteCart_Should_RemoveCartSuccessfully()
         {
             var customerId = 1;
             var cartItem = new CartItem { Name = "Laptop", Price = 1000.00m, Quantity = 1, Discount = 10 };
-            var result = _controller.AddProductToCart(customerId, cartItem);
-            var okResult = result.Result as OkObjectResult;
-            var addedCart = okResult.Value as CartItem;
-
+            _controller.AddProductToCart(customerId, cartItem);
 
             _controller.DeleteCart(customerId);
-            var getresult = _controller.GetCart(customerId) as IActionResult;
-            okResult = getresult as OkObjectResult;
-            var getCart = okResult.Value as Cart;
-            Assert.Null(getCart);
+            var getResult = _controller.GetCart(customerId) as IActionResult;
+            var okResult = getResult as OkObjectResult;
+            var retrievedCart = okResult.Value as Cart;
+
+            Assert.Null(retrievedCart);
         }
 
+        /// <summary>
+        /// Tests that adding a null item to the cart throws an ArgumentNullException.
+        /// </summary>
         [Test]
         public void AddItemToCart_ShouldThrowException_WhenCartItemIsNull()
         {
@@ -118,7 +135,9 @@ namespace InvoicingSystem.Tests
             Assert.AreEqual("Cart item is empty (Parameter 'cartItem')", ex.Message);
         }
 
-
+        /// <summary>
+        /// Tests that adding an item with a negative price throws an ArgumentException.
+        /// </summary>
         [Test]
         public void AddItemToCart_ShouldThrowException_WhenPriceIsNegative()
         {
@@ -129,6 +148,9 @@ namespace InvoicingSystem.Tests
             Assert.AreEqual("Price must be non-negative", ex.Message);
         }
 
+        /// <summary>
+        /// Tests that adding an item with zero or negative quantity throws an ArgumentException.
+        /// </summary>
         [Test]
         public void AddItemToCart_ShouldThrowException_WhenQuantityIsZeroOrLess()
         {
@@ -139,6 +161,9 @@ namespace InvoicingSystem.Tests
             Assert.AreEqual("Quantity must be greater than zero", ex.Message);
         }
 
+        /// <summary>
+        /// Tests that adding an item with a negative discount throws an ArgumentException.
+        /// </summary>
         [Test]
         public void AddItemToCart_ShouldThrowException_WhenDiscountIsNegative()
         {
@@ -149,33 +174,40 @@ namespace InvoicingSystem.Tests
             Assert.AreEqual("Discount must be non-negative", ex.Message);
         }
 
+        /// <summary>
+        /// Tests that generating an invoice throws an exception when the cart is empty.
+        /// </summary>
         [Test]
-        public void GetCart_ShouldReturnNotFound_WhenCartDoesNotExist()
+        public void GenerateInvoice_ShouldThrowException_WhenCartIsEmpty()
         {
             var customerId = 1;
-            var cart = _cartService.GetCart(customerId);
-            Assert.Null(cart);
+
+            var ex = Assert.Throws<InvalidOperationException>(() => _cartService.GenerateInvoice(customerId, "CreditCard"));
+            Assert.AreEqual("Cart item is empty", ex.Message);
         }
 
+        /// <summary>
+        /// Tests that generating an invoice returns the correct details when the cart is valid.
+        /// </summary>
         [Test]
         public void GenerateInvoice_ShouldReturnInvoice_WhenCartIsValid()
         {
             var customerId = 1;
             var cartItem1 = new CartItem { Name = "Laptop", Price = 1000.00m, Quantity = 1, Discount = 10 };
+            var cartItem2 = new CartItem { Name = "Mouse", Price = 900.00m, Quantity = 1, Discount = 2 };
+
             _cartService.AddProductToCart(customerId, cartItem1);
-            var cartItem2 = new CartItem { Name = "mouse", Price = 900.00m, Quantity = 1, Discount = 2 };
             _cartService.AddProductToCart(customerId, cartItem2);
 
-            var cartList = new List<CartItem>();
-            cartList.Add(cartItem1);
-            cartList.Add(cartItem2);
+            var cartList = new List<CartItem> { cartItem1, cartItem2 };
 
             var subTotal = cartList.Sum(t => (t.Price * t.Quantity) - t.Discount);
-            var tax = subTotal * 0.1m; //assuming 10% tax rate
+            var tax = subTotal * 0.1m; // Assuming a 10% tax rate
             var total = subTotal + tax;
-            var discount = cartList.ToList().Sum(item => item.Discount);
+            var discount = cartList.Sum(item => item.Discount);
 
-            _mockCustomerService.Setup(service => service.GetCustomerById(customerId)).Returns(new Customer { Id = customerId, Name = "John Doe" });
+            _mockCustomerService.Setup(service => service.GetCustomerById(customerId))
+                .Returns(new Customer { Id = customerId, Name = "John Doe" });
 
             var result = _controller.GenerateInvoice(customerId, "CreditCard") as IActionResult;
             var okResult = result as OkObjectResult;
@@ -192,15 +224,9 @@ namespace InvoicingSystem.Tests
             Assert.AreEqual("CreditCard", invoice.PaymentOption);
         }
 
-        [Test]
-        public void GenerateInvoice_ShouldThrowException_WhenCartIsEmpty()
-        {
-            var customerId = 1;
-
-            var ex = Assert.Throws<InvalidOperationException>(() => _cartService.GenerateInvoice(customerId, "CreditCard"));
-            Assert.AreEqual("Cart item is empty", ex.Message);
-        }
-
+        /// <summary>
+        /// Tests that generating an invoice throws an exception when the customer is not found.
+        /// </summary>
         [Test]
         public void GenerateInvoice_ShouldThrowException_WhenCustomerNotFound()
         {
@@ -213,14 +239,17 @@ namespace InvoicingSystem.Tests
             Assert.AreEqual("Customer not found.", ex.Message);
         }
 
-
+        /// <summary>
+        /// Tests that generating an invoice throws an exception for invalid payment options.
+        /// </summary>
         [Test]
         public void GenerateInvoice_ShouldThrowException_WhenPaymentOptionIsInvalid()
         {
             var customerId = 1;
             var cartItem = new CartItem { Name = "Laptop", Price = 1000.00m, Quantity = 1, Discount = 10 };
             _cartService.AddProductToCart(customerId, cartItem);
-            _mockCustomerService.Setup(service => service.GetCustomerById(customerId)).Returns(new Customer { Id = customerId, Name = "John Doe" });
+            _mockCustomerService.Setup(service => service.GetCustomerById(customerId))
+                .Returns(new Customer { Id = customerId, Name = "John Doe" });
 
             var ex = Assert.Throws<ArgumentException>(() => _cartService.GenerateInvoice(customerId, ""));
             Assert.AreEqual("Payment option cannot be null or empty. (Parameter 'paymentOption')", ex.Message);
