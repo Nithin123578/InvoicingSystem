@@ -41,10 +41,6 @@ namespace InvoicingSystem.Controllers
         [HttpPut("{id}")]
         public IActionResult UpdateCustomer(Customer customer)
         {
-            if (customer.Id == 0)
-            {
-                return BadRequest();
-            }
             _customerService.UpdateCustomer(customer);
             return NoContent();
         }

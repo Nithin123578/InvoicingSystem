@@ -41,11 +41,6 @@ namespace InvoicingSystem.Controllers
         [HttpPut("{id}")]
         public IActionResult UpdateProduct(Product product)
         {
-            if (product.Id == 0)
-            {
-                return BadRequest();
-            }
-
             _productService.UpdateProduct(product);
             return NoContent();
         }

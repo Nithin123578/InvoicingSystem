@@ -19,6 +19,20 @@ namespace InvoicingSystem.Tests
         }
 
         [Test]
+        public void AddCategory_ShouldThrowException_CategoryIsNull()
+        {
+            var ex = Assert.Throws<ArgumentNullException>(() => _controller.AddCategory(null));
+            Assert.AreEqual("Category is empty (Parameter 'category')", ex.Message);
+        }
+
+        [Test]
+        public void UpdateCategory_ShouldThrowException_CategoryIsNull()
+        {
+            var ex = Assert.Throws<ArgumentNullException>(() => _controller.UpdateCategory(null));
+            Assert.AreEqual("Category is empty (Parameter 'category')", ex.Message);
+        }
+
+        [Test]
         public void AddCategory_Should_AddCategorySuccessfully()
         {
             var category = new Category { Name = "Electronics", Description = "Electronic items" };

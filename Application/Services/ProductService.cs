@@ -52,6 +52,10 @@ namespace Application.Services
 
         private void ValidateProduct(Product product)
         {
+            if (product == null)
+            {
+                throw new ArgumentNullException(nameof(product), "Product is empty");
+            }
             if (string.IsNullOrWhiteSpace(product.Name))
             {
                 throw new ArgumentException("Product name cannot be empty");

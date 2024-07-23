@@ -47,6 +47,10 @@ namespace Application.Services
 
         private void ValidateCategory(Category category)
         {
+            if (category == null)
+            {
+                throw new ArgumentNullException(nameof(category), "Category is empty");
+            }
             if (string.IsNullOrWhiteSpace(category.Name))
             {
                 throw new ArgumentException("Category name cannot be empty");

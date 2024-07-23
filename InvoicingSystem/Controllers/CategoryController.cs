@@ -41,10 +41,6 @@ namespace InvoicingSystem.Controllers
         [HttpPut("{id}")]
         public IActionResult UpdateCategory(Category category)
         {
-            if (category.Id == 0)
-            {
-                return BadRequest();
-            }
             _categoryService.UpdateCategory(category);
             return NoContent();
         }

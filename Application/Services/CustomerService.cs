@@ -51,6 +51,11 @@ namespace Application.Services
 
         private void ValidateCustomer(Customer customer)
         {
+            if (customer == null)
+            {
+                throw new ArgumentNullException(nameof(customer), "Customer is empty");
+            }
+
             if (string.IsNullOrWhiteSpace(customer.Name))
             {
                 throw new ArgumentException("Customer name cannot be empty");

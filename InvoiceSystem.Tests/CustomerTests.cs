@@ -23,6 +23,20 @@ namespace InvoicingSystem.Tests
         }
 
         [Test]
+        public void AddCustomer_ShouldThrowException_CustomerIsNull()
+        {
+            var ex = Assert.Throws<ArgumentNullException>(() => _controller.AddCustomer(null));
+            Assert.AreEqual("Customer is empty (Parameter 'customer')", ex.Message);
+        }
+
+        [Test]
+        public void UpdateCustomer_ShouldThrowException_CustomerIsNull()
+        {
+            var ex = Assert.Throws<ArgumentNullException>(() => _controller.UpdateCustomer(null));
+            Assert.AreEqual("Customer is empty (Parameter 'customer')", ex.Message);
+        }
+
+        [Test]
         public void GetCustomers_Should_ReturnCorrectCustomerList()
         {
             var customer1 = new Customer { Name = "John Doe", Email = "john@example.com", Address = "123 Street", ContactNumber = "1234567890" };

@@ -19,6 +19,21 @@ namespace InvoicingSystem.Tests
         }
 
         [Test]
+        public void AddProduct_ShouldThrowException_ProductIsNull()
+        {
+            var ex = Assert.Throws<ArgumentNullException>(() => _controller.AddProduct(null));
+            Assert.AreEqual("Product is empty (Parameter 'product')", ex.Message);
+        }
+
+        [Test]
+        public void UpdateProduct_ShouldThrowException_ProductIsNull()
+        {
+            var ex = Assert.Throws<ArgumentNullException>(() => _controller.UpdateProduct(null));
+            Assert.AreEqual("Product is empty (Parameter 'product')", ex.Message);
+        }
+
+
+        [Test]
         public void AddProduct_Should_AddProductSuccessfully()
         {
             var product = new Product { Name = "soap", Description = "soap", Price = 100, Quantity = 10, Category = "grocery" };
@@ -44,7 +59,11 @@ namespace InvoicingSystem.Tests
             okResult = result.Result as OkObjectResult;
             var secondProduct = okResult.Value as Product;
 
-            var retrievedProduct = _productService.GetProducts().ToList();
+
+            var getResult = _controller.GetProducts() as ActionResult<IEnumerable<Product>>;
+            okResult = getResult.Result as OkObjectResult;
+            var retrievedProduct = okResult.Value as List<Product>;
+
             Assert.AreEqual(2, retrievedProduct.Count);
             Assert.Contains(firstProduct, retrievedProduct);
             Assert.Contains(secondProduct, retrievedProduct);
