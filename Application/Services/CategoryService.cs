@@ -1,47 +1,101 @@
 ﻿using Application.Interfaces;
 using Application.Models;
+using Microsoft.Extensions.Logging;
 namespace Application.Services
 {
     public class CategoryService : ICategoryService
     {
         private readonly List<Category> _categories = new List<Category>();
+        private readonly ILogger<CategoryService> _logger;
         private int _nextId = 1;
+
+        public CategoryService(ILogger<CategoryService> logger)
+        {
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        }
 
         public IEnumerable<Category> GetCategories()
         {
-            return _categories;
+            try
+            {
+                return _categories;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while getting categories.");
+                return new List<Category>();
+            }
         }
 
         public Category GetCategoryById(int id)
         {
-            return _categories.FirstOrDefault(c => c.Id == id);
+            try
+            {
+                var category = _categories.FirstOrDefault(c => c.Id == id);
+                if (category == null)
+                {
+                    throw new KeyNotFoundException($"Category with ID {id} not found");
+                }
+                return category;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while getting category by ID.");
+                throw;
+            }
         }
 
         public Category AddCategory(Category category)
         {
-            ValidateCategory(category);
-            category.Id = _nextId++;
-            _categories.Add(category);
-            return category;
+            try
+            {
+                ValidateCategory(category);
+                category.Id = _nextId++;
+                _categories.Add(category);
+                return category;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while adding category.");
+                throw;
+            }
         }
 
         public void UpdateCategory(Category category)
         {
-            ValidateCategory(category);
-            var existingCategory = _categories.FirstOrDefault(c => c.Id == category.Id);
-            if (existingCategory != null)
+            try
             {
+                ValidateCategory(category);
+                var existingCategory = _categories.FirstOrDefault(c => c.Id == category.Id);
+                if (existingCategory == null)
+                {
+                    throw new KeyNotFoundException($"Category with ID {category.Id} not found");
+                }
                 existingCategory.Name = category.Name;
                 existingCategory.Description = category.Description;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while updating category.");
+                throw;
             }
         }
 
         public void DeleteCategory(int id)
         {
-            var category = _categories.FirstOrDefault(c => c.Id == id);
-            if (category != null)
+            try
             {
+                var category = _categories.FirstOrDefault(c => c.Id == id);
+                if (category == null)
+                {
+                    throw new KeyNotFoundException($"Category with ID {id} not found");
+                }
                 _categories.Remove(category);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while deleting category.");
+                throw;
             }
         }
 
@@ -61,5 +115,4 @@ namespace Application.Services
             }
         }
     }
-
 }

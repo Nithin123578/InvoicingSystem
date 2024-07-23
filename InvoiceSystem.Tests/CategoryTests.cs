@@ -3,6 +3,8 @@ using Application.Services;
 using Application.Models;
 using InvoicingSystem.Controllers;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using Moq;
 
 namespace InvoicingSystem.Tests
 {
@@ -11,10 +13,12 @@ namespace InvoicingSystem.Tests
     {
         private ICategoryService _categoryService;
         private CategoryController _controller;
+        private Mock<ILogger<CategoryService>> _loggerMock;
         [SetUp]
         public void Setup()
         {
-            _categoryService = new CategoryService();
+            _loggerMock = new Mock<ILogger<CategoryService>>();
+            _categoryService = new CategoryService(_loggerMock.Object);
             _controller = new CategoryController(_categoryService);
         }
 
@@ -110,10 +114,10 @@ namespace InvoicingSystem.Tests
 
 
             _controller.DeleteCategory(addedCategory.Id);
-            result = _controller.GetCategory(addedCategory.Id) as ActionResult<Category>;
-            okResult = result.Result as OkObjectResult;
-            var retrievedCategory = okResult;
-            Assert.IsNull(retrievedCategory);
+            var getResult = _controller.GetCategories()  as ActionResult<IEnumerable<Category>>;
+            okResult = getResult.Result as OkObjectResult;
+            var retrievedCategory = okResult.Value as List<Category>;
+            Assert.IsFalse(retrievedCategory.Any(p => p.Id == addedCategory.Id));
         }
 
         [Test]
@@ -145,6 +149,17 @@ namespace InvoicingSystem.Tests
             validCategory.Description = "";
             ex = Assert.Throws<ArgumentException>(() => _categoryService.UpdateCategory(validCategory));
             Assert.AreEqual("Category description cannot be empty", ex.Message);
+        }
+
+        [Test]
+        public void UpdateCategory_Should_ThrowException_ForInvalidCategoryId()
+        {
+            var validCategory = new Category { Name = "Clothing", Description = "Clothing items" };
+            var addedCategory = _categoryService.AddCategory(validCategory);
+
+            var invalidCategoryId = 999;
+            var ex = Assert.Throws<KeyNotFoundException>(() => _categoryService.GetCategoryById(invalidCategoryId));
+            Assert.AreEqual($"Category with ID {invalidCategoryId} not found", ex.Message);
         }
     }
 }

@@ -6,20 +6,23 @@ using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Linq;
 using InvoicingSystem.Controllers;
+using Moq;
+using Microsoft.Extensions.Logging;
 
 namespace InvoicingSystem.Tests
 {
     [TestFixture]
-    public class CustomerControllerTests
+    public class CustomerTests
     {
        private ICustomerService _customerService;
         private CustomerController _controller;
-
+        private Mock<ILogger<CustomerService>> _loggerMock;
         [SetUp]
         public void Setup()
         {
-            _customerService = new CustomerService();
-            _controller = new CustomerController(new CustomerService());
+            _loggerMock = new Mock<ILogger<CustomerService>>();
+            _customerService = new CustomerService(_loggerMock.Object);
+            _controller = new CustomerController(_customerService);
         }
 
         [Test]
@@ -110,10 +113,11 @@ namespace InvoicingSystem.Tests
             var addedCustomer = okResult.Value as Customer;
 
             _controller.DeleteCustomer(addedCustomer.Id);
-            result = _controller.GetCustomer(addedCustomer.Id) as ActionResult<Customer>;
-            okResult = result.Result as OkObjectResult;
-            var retrievedCustomer = okResult;
-            Assert.IsNull(retrievedCustomer);
+            var getResult = _controller.GetCustomers() as ActionResult<IEnumerable<Customer>>;
+            okResult = getResult.Result as OkObjectResult;
+            var retrievedCustomer = okResult.Value as List<Customer>;
+
+            Assert.IsFalse(retrievedCustomer.Any(p => p.Id == addedCustomer.Id));
         }
 
         [Test]
@@ -170,6 +174,18 @@ namespace InvoicingSystem.Tests
             customer.ContactNumber = "invalidnumber";
             ex = Assert.Throws<ArgumentException>(() => _customerService.UpdateCustomer(customer));
             Assert.AreEqual("Customer contact number is not in a valid format", ex.Message);
+        }
+
+
+        [Test]
+        public void UpdateCustomer_Should_ThrowException_ForInvalidCustomerId()
+        {
+            var customer = new Customer { Name = "John Doe", Email = "john@example.com", Address = "123 Street", ContactNumber = "1234567890" };
+            var addedCustomer = _customerService.AddCustomer(customer);
+
+            var invalidCustomerId = 999;
+            var ex = Assert.Throws<KeyNotFoundException>(() => _customerService.GetCustomerById(invalidCustomerId));
+            Assert.AreEqual($"Customer with ID {invalidCustomerId} not found", ex.Message);
         }
     }
 }
