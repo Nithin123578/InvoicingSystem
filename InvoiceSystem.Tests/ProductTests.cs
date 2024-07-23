@@ -3,6 +3,9 @@ using Application.Services;
 using Application.Models;
 using InvoicingSystem.Controllers;
 using Microsoft.AspNetCore.Mvc;
+using Moq;
+using Castle.Core.Logging;
+using Microsoft.Extensions.Logging;
 
 namespace InvoicingSystem.Tests
 {
@@ -11,10 +14,12 @@ namespace InvoicingSystem.Tests
     {
         private IProductService _productService;
         private ProductController _controller;
+        private Mock<ILogger<ProductService>> _loggerMock;
         [SetUp]
         public void Setup()
         {
-            _productService = new ProductService();
+            _loggerMock = new Mock<ILogger<ProductService>>();
+             _productService = new ProductService(_loggerMock.Object);
             _controller = new ProductController(_productService);
         }
 
@@ -115,10 +120,11 @@ namespace InvoicingSystem.Tests
             var addedProduct = okResult.Value as Product;
 
             _controller.DeleteProduct(addedProduct.Id);
-            result = _controller.GetProduct(addedProduct.Id) as ActionResult<Product>;
-            okResult = result.Result as OkObjectResult;
-            var retrievedProduct = okResult;
-            Assert.IsNull(retrievedProduct);
+            var getResult = _controller.GetProducts() as ActionResult<IEnumerable<Product>>;
+            okResult = getResult.Result as OkObjectResult;
+            var retrievedProducts = okResult.Value as List<Product>;
+
+            Assert.IsFalse(retrievedProducts.Any(p => p.Id == addedProduct.Id));
         }
 
         [Test]
@@ -165,6 +171,17 @@ namespace InvoicingSystem.Tests
             ex = Assert.Throws<ArgumentException>(() => _productService.AddProduct(invalidProduct));
             Assert.AreEqual("Product category cannot be empty", ex.Message);
 
+        }
+
+        [Test]
+        public void UpdateProduct_Should_ThrowException_ForInvalidProductId()
+        {
+            var invalidProduct = new Product { Name = "baby", Description = "Description1", Price = 100, Quantity = 10, Category = "grocery" };
+            var addedProduct = _productService.AddProduct(invalidProduct);
+
+            var invalidProductId = 999;
+            var ex = Assert.Throws<KeyNotFoundException>(() => _productService.GetProductById(invalidProductId));
+            Assert.AreEqual($"Product with ID {invalidProductId} not found", ex.Message);
         }
 
         [Test]
