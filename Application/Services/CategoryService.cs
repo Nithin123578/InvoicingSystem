@@ -50,6 +50,10 @@ namespace Application.Services
             try
             {
                 ValidateCategory(category);
+                if (_categories.Any(c => c.Name == category.Name && c.Description == category.Description))
+                {
+                    throw new ArgumentException("Category already exists");
+                }
                 category.Id = _nextId++;
                 _categories.Add(category);
                 return category;

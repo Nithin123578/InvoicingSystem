@@ -161,5 +161,23 @@ namespace InvoicingSystem.Tests
             var ex = Assert.Throws<KeyNotFoundException>(() => _categoryService.GetCategoryById(invalidCategoryId));
             Assert.AreEqual($"Category with ID {invalidCategoryId} not found", ex.Message);
         }
+
+        [Test]
+        public void AddCategory_ShouldThrowException_ForDuplicateCategory()
+        {
+            var category = new Category { Name = "Electronics", Description = "Electronic items" };
+            _controller.AddCategory(category);
+
+            var duplicateCategory = new Category { Name = "Electronics", Description = "Electronic items" };
+            var ex = Assert.Throws<ArgumentException>(() => _controller.AddCategory(duplicateCategory));
+            Assert.AreEqual("Category already exists", ex.Message);
+        }
+
+        [Test]
+        public void GetCategoryById_ShouldReturnNotFound_ForInvalidId()
+        {
+            var ex = Assert.Throws<KeyNotFoundException>(() => _controller.GetCategory(999));
+            Assert.AreEqual("Category with ID 999 not found", ex.Message);
+        }
     }
 }
