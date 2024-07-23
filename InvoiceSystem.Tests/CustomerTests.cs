@@ -14,9 +14,10 @@ namespace InvoicingSystem.Tests
     [TestFixture]
     public class CustomerTests
     {
-       private ICustomerService _customerService;
+        private ICustomerService _customerService;
         private CustomerController _controller;
         private Mock<ILogger<CustomerService>> _loggerMock;
+
         [SetUp]
         public void Setup()
         {
@@ -43,22 +44,18 @@ namespace InvoicingSystem.Tests
         public void GetCustomers_Should_ReturnCorrectCustomerList()
         {
             var customer1 = new Customer { Name = "John Doe", Email = "john@example.com", Address = "123 Street", ContactNumber = "1234567890" };
-            var result = _controller.AddCustomer(customer1);
-            var okResult = result.Result as OkObjectResult;
-            var firstCustomer = okResult.Value as Customer;
+            _controller.AddCustomer(customer1);
 
             var customer2 = new Customer { Name = "Jane Smith", Email = "jane@example.com", Address = "456 Avenue", ContactNumber = "0987654321" };
-            result = _controller.AddCustomer(customer2);
-            okResult = result.Result as OkObjectResult;
-            var secondCustomer = okResult.Value as Customer;
+            _controller.AddCustomer(customer2);
 
             var getResult = _controller.GetCustomers() as ActionResult<IEnumerable<Customer>>;
-            okResult = getResult.Result as OkObjectResult;
+            var okResult = getResult.Result as OkObjectResult;
             var retrievedCustomers = okResult.Value as List<Customer>;
 
             Assert.AreEqual(2, retrievedCustomers.Count);
-            Assert.Contains(firstCustomer, retrievedCustomers);
-            Assert.Contains(secondCustomer, retrievedCustomers);
+            Assert.Contains(customer1, retrievedCustomers);
+            Assert.Contains(customer2, retrievedCustomers);
         }
 
         [Test]
@@ -69,8 +66,8 @@ namespace InvoicingSystem.Tests
             var okResult = result.Result as OkObjectResult;
             var addedCustomer = okResult.Value as Customer;
 
-             result = _controller.GetCustomer(addedCustomer.Id) as ActionResult<Customer>;
-             okResult = result.Result as OkObjectResult;
+            var getResult = _controller.GetCustomer(addedCustomer.Id) as ActionResult<Customer>;
+            okResult = getResult.Result as OkObjectResult;
             var retrievedCustomer = okResult.Value as Customer;
 
             Assert.AreEqual(addedCustomer, retrievedCustomer);
@@ -98,9 +95,10 @@ namespace InvoicingSystem.Tests
             addedCustomer.Name = "Jane Doe";
             _controller.UpdateCustomer(addedCustomer);
 
-            result = _controller.GetCustomer(addedCustomer.Id) as ActionResult<Customer>;
-            okResult = result.Result as OkObjectResult;
+            var updatedResult = _controller.GetCustomer(addedCustomer.Id) as ActionResult<Customer>;
+            okResult = updatedResult.Result as OkObjectResult;
             var updatedCustomer = okResult.Value as Customer;
+
             Assert.AreEqual("Jane Doe", updatedCustomer.Name);
         }
 
@@ -115,9 +113,9 @@ namespace InvoicingSystem.Tests
             _controller.DeleteCustomer(addedCustomer.Id);
             var getResult = _controller.GetCustomers() as ActionResult<IEnumerable<Customer>>;
             okResult = getResult.Result as OkObjectResult;
-            var retrievedCustomer = okResult.Value as List<Customer>;
+            var retrievedCustomers = okResult.Value as List<Customer>;
 
-            Assert.IsFalse(retrievedCustomer.Any(p => p.Id == addedCustomer.Id));
+            Assert.IsFalse(retrievedCustomers.Any(p => p.Id == addedCustomer.Id));
         }
 
         [Test]
@@ -176,7 +174,6 @@ namespace InvoicingSystem.Tests
             Assert.AreEqual("Customer contact number is not in a valid format", ex.Message);
         }
 
-
         [Test]
         public void UpdateCustomer_Should_ThrowException_ForInvalidCustomerId()
         {
@@ -186,6 +183,27 @@ namespace InvoicingSystem.Tests
             var invalidCustomerId = 999;
             var ex = Assert.Throws<KeyNotFoundException>(() => _customerService.GetCustomerById(invalidCustomerId));
             Assert.AreEqual($"Customer with ID {invalidCustomerId} not found", ex.Message);
+        }
+
+        [Test]
+        public void GetCustomers_Should_ReturnEmptyList_WhenNoCustomers()
+        {
+            var getResult = _controller.GetCustomers() as ActionResult<IEnumerable<Customer>>;
+            var okResult = getResult.Result as OkObjectResult;
+            var retrievedCustomers = okResult.Value as List<Customer>;
+
+            Assert.AreEqual(0, retrievedCustomers.Count);
+        }
+
+        [Test]
+        public void AddCustomer_Should_ThrowException_ForDuplicateEmail()
+        {
+            var customer1 = new Customer { Name = "John Doe", Email = "john@example.com", Address = "123 Street", ContactNumber = "1234567890" };
+            _controller.AddCustomer(customer1);
+
+            var customer2 = new Customer { Name = "Jane Smith", Email = "john@example.com", Address = "456 Avenue", ContactNumber = "0987654321" };
+            var ex = Assert.Throws<ArgumentException>(() => _customerService.AddCustomer(customer2));
+            Assert.AreEqual("Customer email already exists", ex.Message);
         }
     }
 }

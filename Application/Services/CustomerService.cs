@@ -52,6 +52,10 @@ namespace Application.Services
             try
             {
                 ValidateCustomer(customer);
+                if (_customers.Any(c => c.Email.Equals(customer.Email, StringComparison.OrdinalIgnoreCase)))
+                {
+                    throw new ArgumentException("Customer email already exists");
+                }
                 customer.Id = _nextId++;
                 _customers.Add(customer);
                 return customer;
