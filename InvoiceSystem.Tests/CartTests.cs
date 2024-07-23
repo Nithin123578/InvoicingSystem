@@ -3,11 +3,8 @@ using Application.Models;
 using Application.Services;
 using InvoicingSystem.Controllers;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
-using NUnit.Framework;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace InvoicingSystem.Tests
 {
@@ -18,13 +15,15 @@ namespace InvoicingSystem.Tests
         private ICartService _cartService;
         private Mock<IProductService> _mockProductService;
         private Mock<ICustomerService> _mockCustomerService;
+        private Mock<ILogger<CartService>> _loggerMock;
 
         [SetUp]
         public void SetUp()
         {
             _mockCustomerService = new Mock<ICustomerService>();
             _mockProductService = new Mock<IProductService>();
-            _cartService = new CartService(_mockCustomerService.Object, _mockProductService.Object);
+            _loggerMock = new Mock<ILogger<CartService>>();
+            _cartService = new CartService(_mockCustomerService.Object, _mockProductService.Object, _loggerMock.Object);
             _controller = new CartController(_cartService);
         }
 

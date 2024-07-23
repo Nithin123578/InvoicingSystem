@@ -1,5 +1,6 @@
 ﻿using Application.Interfaces;
 using Application.Models;
+using Microsoft.Extensions.Logging;
 
 namespace Application.Services
 {
@@ -8,53 +9,71 @@ namespace Application.Services
         private readonly ICustomerService _customerService;
         private readonly IProductService _productService;
         private readonly List<Cart> _carts = new List<Cart>();
+        private readonly ILogger<CartService> _logger;
         private int _nextId = 1;
-        public CartService(ICustomerService customerService, IProductService productService)
+
+        public CartService(ICustomerService customerService, IProductService productService, ILogger<CartService> logger)
         {
             _customerService = customerService ?? throw new ArgumentNullException(nameof(customerService));
             _productService = productService ?? throw new ArgumentNullException(nameof(productService));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public CartItem AddProductToCart(int customerId, CartItem cartItem)
         {
-            ValidateCartItem(cartItem);
-            var cart = _carts.FirstOrDefault(c => c.CustomerId == customerId);
-            if (cart == null)
+            try
             {
-                cart = new Cart { CustomerId = customerId, Items = new List<CartItem>() };
-                _carts.Add(cart);
-            }
-            var existingItem = cart.Items.FirstOrDefault(item => item.CardId == cartItem.CardId && cartItem.CardId != 0);
-            if (existingItem != null)
-            {
-                existingItem.Quantity += cartItem.Quantity;
-                existingItem.Discount = existingItem.Discount;
-                existingItem.Total = existingItem.Price * existingItem.Quantity - existingItem.Discount;
-                return existingItem;
-            }
-            else
-            {
-                var newCartItem = new CartItem
+                ValidateCartItem(cartItem);
+                var cart = _carts.FirstOrDefault(c => c.CustomerId == customerId);
+                if (cart == null)
                 {
-                    CardId = _nextId++,
-                    Name = cartItem.Name,
-                    Price = cartItem.Price,
-                    Quantity = cartItem.Quantity,
-                    Discount = cartItem.Discount,
-                    Total = cartItem.Price * cartItem.Quantity - cartItem.Discount
-                };
-                cart.Items.Add(newCartItem);
-                return newCartItem;
+                    cart = new Cart { CustomerId = customerId, Items = new List<CartItem>() };
+                    _carts.Add(cart);
+                }
+                var existingItem = cart.Items.FirstOrDefault(item => item.CardId == cartItem.CardId && cartItem.CardId != 0);
+                if (existingItem != null)
+                {
+                    existingItem.Quantity += cartItem.Quantity;
+                    existingItem.Discount = existingItem.Discount;
+                    existingItem.Total = existingItem.Price * existingItem.Quantity - existingItem.Discount;
+                    return existingItem;
+                }
+                else
+                {
+                    var newCartItem = new CartItem
+                    {
+                        CardId = _nextId++,
+                        Name = cartItem.Name,
+                        Price = cartItem.Price,
+                        Quantity = cartItem.Quantity,
+                        Discount = cartItem.Discount,
+                        Total = cartItem.Price * cartItem.Quantity - cartItem.Discount
+                    };
+                    cart.Items.Add(newCartItem);
+                    return newCartItem;
+                }
             }
-            
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while adding product to cart.");
+                throw;
+            }
         }
 
         public void DeleteCart(int customerId)
         {
-            var cart = _carts.FirstOrDefault(p => p.CustomerId == customerId);
-            if (cart != null)
+            try
             {
-                _carts.Remove(cart);
+                var cart = _carts.FirstOrDefault(p => p.CustomerId == customerId);
+                if (cart != null)
+                {
+                    _carts.Remove(cart);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while deleting cart.");
+                throw;
             }
         }
 
@@ -80,41 +99,56 @@ namespace Application.Services
 
         public Cart GetCart(int customerId)
         {
-            return _carts.FirstOrDefault(c => c.CustomerId == customerId);
+            try
+            {
+                return _carts.FirstOrDefault(c => c.CustomerId == customerId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while getting cart.");
+                throw;
+            }
         }
 
         public Invoice GenerateInvoice(int customerId, string paymentOption)
         {
-            ValidatePaymentOption(paymentOption);
-            var cart = GetCart(customerId);
-            if (cart == null || !cart.Items.Any())
+            try
             {
-                throw new InvalidOperationException("Cart item is empty");
+                ValidatePaymentOption(paymentOption);
+                var cart = GetCart(customerId);
+                if (cart == null || !cart.Items.Any())
+                {
+                    throw new InvalidOperationException("Cart item is empty");
+                }
+
+                var customer = _customerService.GetCustomerById(customerId);
+                if (customer == null)
+                {
+                    throw new InvalidOperationException("Customer not found.");
+                }
+                var subTotal = cart.Items.Sum(t => t.Total);
+                var tax = subTotal * 0.1m; // Assuming 10% tax rate
+                var total = subTotal + tax;
+
+                var invoice = new Invoice
+                {
+                    Customer = customer,
+                    Items = cart.Items.ToList(),
+                    SubTotal = subTotal,
+                    Discount = cart.Items.ToList().Sum(item => item.Discount),
+                    Tax = tax,
+                    Total = total,
+                    PaymentOption = paymentOption
+                };
+
+                return invoice;
             }
-
-            var customer = _customerService.GetCustomerById(customerId);
-            if (customer == null)
+            catch (Exception ex)
             {
-                throw new InvalidOperationException("Customer not found.");
+                _logger.LogError(ex, "Error occurred while generating invoice.");
+                throw;
             }
-            var subTotal = cart.Items.Sum(t => t.Total);
-            var tax = subTotal * 0.1m; // Assuming 10% tax rate
-            var total = subTotal + tax;
-
-            var invoice = new Invoice
-            {
-                Customer = customer,
-                Items = cart.Items.ToList(),
-                SubTotal = subTotal,
-                Discount = cart.Items.ToList().Sum(item => item.Discount),
-                Tax = tax,
-                Total = total,
-                PaymentOption = paymentOption
-            };
-
-            return invoice;
         }
-
 
         private void ValidatePaymentOption(string paymentOption)
         {
@@ -130,6 +164,4 @@ namespace Application.Services
             }
         }
     }
-
-
 }

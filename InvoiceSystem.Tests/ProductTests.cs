@@ -4,7 +4,6 @@ using Application.Models;
 using InvoicingSystem.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
-using Castle.Core.Logging;
 using Microsoft.Extensions.Logging;
 
 namespace InvoicingSystem.Tests
