@@ -232,5 +232,38 @@ namespace InvoicingSystem.Tests
             ex = Assert.Throws<ArgumentException>(() => _productService.UpdateProduct(invalidProduct));
             Assert.AreEqual("Product category cannot be empty", ex.Message);
         }
+
+        [Test]
+        public void AddProduct_ShouldThrowException_ForDuplicateProduct()
+        {
+            var product = new Product { Name = "soap", Description = "soap", Price = 100, Quantity = 10, Category = "grocery" };
+            _controller.AddProduct(product);
+
+            var duplicateProduct = new Product { Name = "soap", Description = "soap", Price = 100, Quantity = 10, Category = "grocery" };
+            var ex = Assert.Throws<ArgumentException>(() => _controller.AddProduct(duplicateProduct));
+            Assert.AreEqual("Product already exists", ex.Message);
+        }
+
+        [Test]
+        public void UpdateProduct_ShouldThrowException_ForNonExistingProduct()
+        {
+            var product = new Product { Id = 999, Name = "non-existent", Description = "non-existent", Price = 100, Quantity = 10, Category = "grocery" };
+            var ex = Assert.Throws<KeyNotFoundException>(() => _controller.UpdateProduct(product));
+            Assert.AreEqual("Product with ID 999 not found", ex.Message);
+        }
+
+        [Test]
+        public void DeleteProduct_ShouldThrowException_ForNonExistingProduct()
+        {
+            var ex = Assert.Throws<KeyNotFoundException>(() => _controller.DeleteProduct(999));
+            Assert.AreEqual("Product with ID 999 not found", ex.Message);
+        }
+
+        [Test]
+        public void GetProduct_ShouldReturnNotFound_ForInvalidId()
+        {
+            var ex = Assert.Throws<KeyNotFoundException>(() => _controller.GetProduct(999));
+            Assert.AreEqual("Product with ID 999 not found", ex.Message);
+        }
     }
 }

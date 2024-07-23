@@ -51,6 +51,10 @@ namespace Application.Services
             try
             {
                 ValidateProduct(product);
+                if (_products.Any(p => p.Name == product.Name && p.Description == product.Description && p.Price == product.Price && p.Quantity == product.Quantity && p.Category == product.Category))
+                {
+                    throw new ArgumentException("Product already exists");
+                }
                 product.Id = _nextId++;
                 _products.Add(product);
                 return product;
