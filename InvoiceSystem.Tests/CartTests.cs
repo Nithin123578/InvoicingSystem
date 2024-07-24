@@ -17,7 +17,6 @@ namespace InvoicingSystem.Tests
     {
         private CartController _controller;
         private ICartService _cartService;
-        private Mock<IProductService> _mockProductService;
         private Mock<ICustomerService> _mockCustomerService;
         private Mock<ILogger<CartService>> _loggerMock;
 
@@ -25,9 +24,8 @@ namespace InvoicingSystem.Tests
         public void SetUp()
         {
             _mockCustomerService = new Mock<ICustomerService>();
-            _mockProductService = new Mock<IProductService>();
             _loggerMock = new Mock<ILogger<CartService>>();
-            _cartService = new CartService(_mockCustomerService.Object, _mockProductService.Object, _loggerMock.Object);
+            _cartService = new CartService(_mockCustomerService.Object, _loggerMock.Object);
             _controller = new CartController(_cartService);
         }
 

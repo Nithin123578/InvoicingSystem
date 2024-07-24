@@ -9,9 +9,6 @@ namespace Application.Services
         // Service for handling customer-related operations
         private readonly ICustomerService _customerService;
 
-        // Service for handling product-related operations
-        private readonly IProductService _productService;
-
         // In-memory storage for carts
         private readonly List<Cart> _carts = new List<Cart>();
 
@@ -22,10 +19,9 @@ namespace Application.Services
         private int _nextId = 1;
 
         // Initializes the service with dependencies
-        public CartService(ICustomerService customerService, IProductService productService, ILogger<CartService> logger)
+        public CartService(ICustomerService customerService,ILogger<CartService> logger)
         {
             _customerService = customerService ?? throw new ArgumentNullException(nameof(customerService));
-            _productService = productService ?? throw new ArgumentNullException(nameof(productService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
